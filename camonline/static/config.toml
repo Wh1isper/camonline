@@ -1,0 +1,9 @@
+[camera]
+device = 0
+resolution = [640, 480]
+fps = 20
+
+[storage]
+record_dir = "~/.camonline/storage"
+fourcc = "PIM1"
+suffix = ".mkv"
