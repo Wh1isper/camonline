@@ -18,7 +18,6 @@ Make your computer camera a monitor
 docker run -d --restart always \
 --name camonline \
 --device=/dev/video0:/dev/video0 \
--e TZ=Asia/Shanghai \
 -v ~/.camonline:/root/.camonline \
 wh1isper/camonline
 ```
