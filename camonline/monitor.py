@@ -25,9 +25,7 @@ class RotateMonitor(Configuable):
         },
     }
 
-    def __init__(
-        self, config: Optional[Union[Config, Dict[str, Any]]] = None, *args, **kwargs
-    ):
+    def __init__(self, config: Optional[Union[Config, Dict[str, Any]]] = None, *args, **kwargs):
         super().__init__(config, *args, **kwargs)
         self.camera: Camera = CameraManager.get_or_create(self.config.camera.device)
         self.record_dir.mkdir(parents=True, exist_ok=True)
@@ -46,9 +44,7 @@ class RotateMonitor(Configuable):
     @property
     def current_record_file(self) -> Path:
         today = datetime.now().strftime("%Y-%m-%d")
-        return (
-            (self.record_dir / today).with_suffix(self.config.storage.suffix).as_posix()
-        )
+        return (self.record_dir / today).with_suffix(self.config.storage.suffix).as_posix()
 
     def attatch(self):
         fourcc = cv.VideoWriter_fourcc(*self.config.storage.fourcc)
