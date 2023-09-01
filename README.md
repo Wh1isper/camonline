@@ -6,19 +6,21 @@
 
 # camonline
 
+Make your computer camera a monitor
+
 ## Install
 
 `pip install camonline`
 
 ## Usage
 
-Set timezone(e.g. `Aisa/Shanghai UTC+8`)
-
 ```bash
-docker run -it \
--v /dev/video4:/dev/video0 \
+docker run -d --restart always \
+--name camonline \
+--device=/dev/video0:/dev/video0 \
 -e TZ=Asia/Shanghai \
-wh1isper/camonline:latest
+-v ~/.camonline/storage:/root/.camonline/storage \
+wh1isper/camonline
 ```
 
 ## Develop

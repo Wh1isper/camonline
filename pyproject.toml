@@ -7,7 +7,7 @@ name = "camonline"
 description = "camonline"
 keywords = ["camonline"]
 requires-python = ">=3.8"
-dependencies = ["opencv-python-headless", "click", "loguru", "tomli-w"]
+dependencies = ["opencv-python-headless", "click", "loguru", "tomli", "tomli-w"]
 dynamic = ["version"]
 classifiers = [
     "Programming Language :: Python :: 3.8",
