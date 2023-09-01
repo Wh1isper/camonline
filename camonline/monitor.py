@@ -1,5 +1,5 @@
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -21,10 +21,13 @@ class RotateMonitor(Configuable):
             "record_dir": "~/.camonline/storage",
             "fourcc": "PIM1",
             "suffix": ".mkv",
+            "days": 30,
         },
     }
 
-    def __init__(self, config: Optional[Union[Config, Dict[str, Any]]] = None, *args, **kwargs):
+    def __init__(
+        self, config: Optional[Union[Config, Dict[str, Any]]] = None, *args, **kwargs
+    ):
         super().__init__(config, *args, **kwargs)
         self.camera: Camera = CameraManager.get_or_create(self.config.camera.device)
         self.record_dir.mkdir(parents=True, exist_ok=True)
@@ -43,7 +46,9 @@ class RotateMonitor(Configuable):
     @property
     def current_record_file(self) -> Path:
         today = datetime.now().strftime("%Y-%m-%d")
-        return (self.record_dir / today).with_suffix(self.config.storage.suffix).as_posix()
+        return (
+            (self.record_dir / today).with_suffix(self.config.storage.suffix).as_posix()
+        )
 
     def attatch(self):
         fourcc = cv.VideoWriter_fourcc(*self.config.storage.fourcc)
@@ -90,6 +95,16 @@ class RotateMonitor(Configuable):
                 if today != self.start_day:
                     self.reattatch()
                     self.start_day = today
+                    to_remove_day = (
+                        datetime.now() - timedelta(days=self.config.storage.days)
+                    ).strftime("%Y-%m-%d")
+                    logger.info(
+                        f"Delete {self.config.storage.days} days before record:{to_remove_day}"
+                    )
+                    (self.record_dir / to_remove_day).with_suffix(
+                        self.config.storage.suffix
+                    ).unlink(missing_ok=True)
+
                 self.shutdown_event.wait(1)
 
         self._thread = threading.Thread(target=_)
