@@ -57,6 +57,8 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm64/v8
         file: ./docker/Dockerfile
+        build-args: |
+          PACKAGE_VERSION=${{ github.ref_name }}
         push: true
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/camonline:${{  github.ref_name }}
     # Build latest if release
@@ -69,5 +71,7 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm64/v8
         file: ./docker/Dockerfile
+        build-args: |
+          PACKAGE_VERSION=${{ github.ref_name }}
         push: true
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/camonline:latest
