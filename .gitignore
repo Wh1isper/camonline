@@ -570,3 +570,4 @@ dmypy.json
 cython_debug/
 
 dev-tools/config.toml
+dev-tools/.storages/*

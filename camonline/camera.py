@@ -2,6 +2,8 @@ import threading
 
 import cv2 as cv
 
+from camonline.log import logger
+
 
 class CameraManager:
     _cache = {}
@@ -19,6 +21,14 @@ class CameraManager:
 class Camera:
     def __init__(self, index) -> None:
         self.cap = cv.VideoCapture(index)
+        self.fps = self.cap.get(cv.CAP_PROP_FPS)
+        logger.info(f"Camera fps is {self.fps}")
+        self.resolution = (
+            int(self.cap.get(cv.CAP_PROP_FRAME_WIDTH)),
+            int(self.cap.get(cv.CAP_PROP_FRAME_HEIGHT)),
+        )
+        logger.info(f"Camera resolution is {self.resolution}")
+
         self.callbacks = []
 
     def _read_fream(self):

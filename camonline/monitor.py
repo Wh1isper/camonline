@@ -14,11 +14,10 @@ class RotateMonitor(Configuable):
     default_config = {
         "camera": {
             "device": 0,
-            "resolution": [640, 480],
-            "fps": 30.0,
         },
         "storage": {
             "record_dir": "~/.camonline/storage",
+            "resolution": [640, 480],
             "fourcc": "PIM1",
             "suffix": ".mkv",
             "days": 30,
@@ -37,6 +36,8 @@ class RotateMonitor(Configuable):
         self._thread = None
         self._rotate_thread = None
 
+        self._fps = None
+
     @property
     def record_dir(self) -> Path:
         return Path(self.config.storage.record_dir).expanduser().absolute()
@@ -46,17 +47,22 @@ class RotateMonitor(Configuable):
         today = datetime.now().strftime("%Y-%m-%d")
         return (self.record_dir / today).with_suffix(self.config.storage.suffix).as_posix()
 
+    @property
+    def fps(self):
+        if not self._fps:
+            self._fps = self.config.storage.fps or self.camera.fps
+        return self._fps
+
     def attatch(self):
         fourcc = cv.VideoWriter_fourcc(*self.config.storage.fourcc)
         out = cv.VideoWriter(
             self.current_record_file,
             fourcc,
-            self.config.camera.fps,
-            self.config.camera.resolution,
+            self.fps,
+            self.config.storage.resolution or self.camera.resolution,
         )
 
         def _(frame):
-            logger.debug(frame)
             out.write(frame)
 
         logger.info(f"Attatch to {self.current_record_file}")
@@ -83,7 +89,7 @@ class RotateMonitor(Configuable):
         def _():
             while not self.shutdown_event.is_set():
                 self.camera.poll()
-                self.shutdown_event.wait(1 / self.config.camera.fps)
+                self.shutdown_event.wait(1 / self.fps)
 
         def _rotate():
             while not self.shutdown_event.is_set():
@@ -101,7 +107,7 @@ class RotateMonitor(Configuable):
                         self.config.storage.suffix
                     ).unlink(missing_ok=True)
 
-                self.shutdown_event.wait(1)
+                self.shutdown_event.wait(60)
 
         self._thread = threading.Thread(target=_)
         self._thread.start()
