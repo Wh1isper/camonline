@@ -6,3 +6,4 @@ record_dir = "~/.camonline/storage"
 fourcc = "PIM1"
 suffix = ".mkv"
 days = 30
+hours = 1

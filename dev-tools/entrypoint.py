@@ -1,4 +1,5 @@
 import os
+import shutil
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.environ["CAMONLINE_LOG_LEVEL"] = "DEBUG"
@@ -18,6 +19,12 @@ def load_entry_point(distribution, group, name):
 
 
 config_file = Path("./config.toml")
+storage_dir = Path("./.storages")
+
+# Remove old storage
+shutil.rmtree(storage_dir, ignore_errors=True)
+storage_dir.mkdir(exist_ok=True)
+
 
 if __name__ == "__main__":
     sys.argv[0] = re.sub(r"(-script\.pyw?|\.exe)?$", "", sys.argv[0])

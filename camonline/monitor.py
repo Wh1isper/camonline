@@ -21,6 +21,7 @@ class RotateMonitor(Configuable):
             "fourcc": "PIM1",
             "suffix": ".mkv",
             "days": 30,
+            "hours": 1,
         },
     }
 
@@ -33,7 +34,10 @@ class RotateMonitor(Configuable):
 
         self._attatch_func = None
         self._shutdown_callback = None
+
+        self._start_datetime = None
         self._thread = None
+        self._clean_thread = None
         self._rotate_thread = None
 
         self._fps = None
@@ -44,8 +48,12 @@ class RotateMonitor(Configuable):
 
     @property
     def current_record_file(self) -> Path:
-        today = datetime.now().strftime("%Y-%m-%d")
-        return (self.record_dir / today).with_suffix(self.config.storage.suffix).as_posix()
+        now = datetime.now()
+        today = now.strftime("%Y-%m-%d")
+        current = now.strftime("%H:%M:%S")
+        if not (self.record_dir / today).exists():
+            (self.record_dir / today).mkdir(parents=True, exist_ok=True)
+        return (self.record_dir / today / current).with_suffix(self.config.storage.suffix)
 
     @property
     def fps(self):
@@ -54,9 +62,10 @@ class RotateMonitor(Configuable):
         return self._fps
 
     def attatch(self):
+        self._start_datetime = datetime.now()
         fourcc = cv.VideoWriter_fourcc(*self.config.storage.fourcc)
         out = cv.VideoWriter(
-            self.current_record_file,
+            self.current_record_file.as_posix(),
             fourcc,
             self.fps,
             self.config.storage.resolution or self.camera.resolution,
@@ -91,28 +100,40 @@ class RotateMonitor(Configuable):
                 self.camera.poll()
                 self.shutdown_event.wait(1 / self.fps)
 
-        def _rotate():
+        def _clean():
             while not self.shutdown_event.is_set():
-                today = datetime.now().strftime("%Y-%m-%d")
-                if today != self.start_day:
-                    self.reattatch()
-                    self.start_day = today
-                    to_remove_day = (
-                        datetime.now() - timedelta(days=self.config.storage.days)
-                    ).strftime("%Y-%m-%d")
+                today = datetime.now()
+                to_remove = today - timedelta(days=self.config.storage.days)
+                to_remove_dir = self.record_dir / to_remove.strftime("%Y-%m-%d")
+                if to_remove_dir.exists():
                     logger.info(
-                        f"Delete {self.config.storage.days} days before record:{to_remove_day}"
+                        f"Delete {self.config.storage.days} days before record:{to_remove_dir}"
                     )
-                    (self.record_dir / to_remove_day).with_suffix(
-                        self.config.storage.suffix
-                    ).unlink(missing_ok=True)
+                    for file in to_remove_dir.iterdir():
+                        file.unlink(missing_ok=True)
+                    to_remove_dir.rmdir()
+                else:
+                    logger.debug(f"{to_remove_dir} not exists, skip delete.")
 
                 self.shutdown_event.wait(60)
+
+        def _rorate():
+            while not self.shutdown_event.is_set():
+                now = datetime.now()
+                logger.info(f"{now - self._start_datetime}")
+                if now - self._start_datetime > timedelta(hours=self.config.storage.hours):
+                    self._start_datetime = now
+                    logger.info("Rotate vedio file")
+                    self.reattatch()
+                self.shutdown_event.wait(1)
 
         self._thread = threading.Thread(target=_)
         self._thread.start()
 
-        self._rotate_thread = threading.Thread(target=_rotate)
+        self._clean_thread = threading.Thread(target=_clean)
+        self._clean_thread.start()
+
+        self._rotate_thread = threading.Thread(target=_rorate)
         self._rotate_thread.start()
 
     def shutdown(self):
