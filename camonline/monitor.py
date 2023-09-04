@@ -50,7 +50,7 @@ class RotateMonitor(Configuable):
     def current_record_file(self) -> Path:
         now = datetime.now()
         today = now.strftime("%Y-%m-%d")
-        current = now.strftime("%H:%M:%S")
+        current = now.strftime("%H-%M-%S")
         if not (self.record_dir / today).exists():
             (self.record_dir / today).mkdir(parents=True, exist_ok=True)
         return (self.record_dir / today / current).with_suffix(self.config.storage.suffix)
