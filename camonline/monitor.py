@@ -115,17 +115,17 @@ class RotateMonitor(Configuable):
                 else:
                     logger.debug(f"{to_remove_dir} not exists, skip delete.")
 
-                self.shutdown_event.wait(60)
+                self.shutdown_event.wait(600)
 
         def _rorate():
             while not self.shutdown_event.is_set():
                 now = datetime.now()
-                logger.info(f"{now - self._start_datetime}")
+                logger.info(f"Recoring video for {now - self._start_datetime}")
                 if now - self._start_datetime > timedelta(hours=self.config.storage.hours):
                     self._start_datetime = now
                     logger.info("Rotate vedio file")
                     self.reattatch()
-                self.shutdown_event.wait(1)
+                self.shutdown_event.wait(60)
 
         self._thread = threading.Thread(target=_)
         self._thread.start()
